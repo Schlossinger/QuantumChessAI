@@ -4,59 +4,59 @@
 #include <string>
 #include <iomanip>
 
-// Konstanten für das Schachbrett
+// Constants for the chessboard
 constexpr int BOARD_SIZE = 8;
 constexpr int NUM_FIELDS = BOARD_SIZE * BOARD_SIZE;
-constexpr int MAX_FIGURES = 32; // 16 pro Seite
+constexpr int MAX_FIGURES = 32; // 16 per side
 
-// Figuren-Typen
+// Piece types
 enum PieceType { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONE };
 
-// Farben
+// Colors
 enum Color { WHITE, BLACK, NO_COLOR };
 
-// Struktur für eine Figur
+// Structure for a piece
 struct Piece {
     PieceType type;
     Color color;
-    int index; // eindeutiger Index (0..31)
-    int pos;   // Feldindex 0..63
-    double share; // Aufenthaltsanteil in %
+    int index; // unique index (0..31)
+    int pos;   // field index 0..63
+    double share; // occupancy share in %
 };
 
-// Für jedes Feld: bis zu 32 Figurenanteile
+// For each field: up to 32 piece shares
 struct FieldShares {
-    std::array<double, MAX_FIGURES> shares{}; // Anteil je Figur
+    std::array<double, MAX_FIGURES> shares{}; // share per piece
     double sum_white = 0.0;
     double sum_black = 0.0;
     double sum_total = 0.0;
     double empty_share = 100.0;
 };
 
-// Hilfsfunktionen
+// Helper functions
 int toIndex(int row, int col) { return row * BOARD_SIZE + col; }
 std::pair<int, int> toCoord(int idx) { return {idx / BOARD_SIZE, idx % BOARD_SIZE}; }
 
-// Initialisiere Figuren (nur Bauern und Springer für Demo)
+// Initialize pieces (only pawns and knights for demo)
 std::vector<Piece> initPieces() {
     std::vector<Piece> pieces;
     int idx = 0;
-    // Weiße Bauern
+    // White pawns
     for (int i = 0; i < 8; ++i)
         pieces.push_back({PAWN, WHITE, idx++, toIndex(1, i), 100.0});
-    // Weiße Springer
+    // White knights
     pieces.push_back({KNIGHT, WHITE, idx++, toIndex(0, 1), 100.0});
     pieces.push_back({KNIGHT, WHITE, idx++, toIndex(0, 6), 100.0});
-    // Schwarze Bauern
+    // Black pawns
     for (int i = 0; i < 8; ++i)
         pieces.push_back({PAWN, BLACK, idx++, toIndex(6, i), 100.0});
-    // Schwarze Springer
+    // Black knights
     pieces.push_back({KNIGHT, BLACK, idx++, toIndex(7, 1), 100.0});
     pieces.push_back({KNIGHT, BLACK, idx++, toIndex(7, 6), 100.0});
     return pieces;
 }
 
-// Berechne legale Züge für Bauern und Springer (vereinfachte Demo)
+// Calculate legal moves for pawns and knights (simplified demo)
 std::vector<int> getMoves(const Piece& p) {
     std::vector<int> moves;
     auto [row, col] = toCoord(p.pos);
@@ -65,7 +65,7 @@ std::vector<int> getMoves(const Piece& p) {
         int nextRow = row + dir;
         if (nextRow >= 0 && nextRow < BOARD_SIZE) {
             moves.push_back(toIndex(nextRow, col));
-            // Doppelzug am Anfang
+            // Double move at the beginning
             if ((p.color == WHITE && row == 1) || (p.color == BLACK && row == 6)) {
                 int dblRow = row + 2 * dir;
                 if (dblRow >= 0 && dblRow < BOARD_SIZE)
@@ -83,25 +83,25 @@ std::vector<int> getMoves(const Piece& p) {
     return moves;
 }
 
-// Verteile Figurenanteile auf Zielfelder
+// Distribute piece shares to target squares
 void distributeShares(const std::vector<Piece>& pieces, std::array<FieldShares, NUM_FIELDS>& board) {
-    // Leere Felder
+    // Empty fields
     for (auto& f : board) {
         f.shares.fill(0.0);
         f.sum_white = f.sum_black = f.sum_total = 0.0;
         f.empty_share = 100.0;
     }
-    // Verteile Anteile
+    // Distribute shares
     for (const auto& p : pieces) {
         auto moves = getMoves(p);
-        double share_per_move = moves.empty() ? 0.0 : p.share / (moves.size() + 1); // +1 für Ursprungsfeld
-        // Anteil auf Ursprungsfeld
+        double share_per_move = moves.empty() ? 0.0 : p.share / (moves.size() + 1); // +1 for origin square
+        // Share on origin square
         board[p.pos].shares[p.index] += share_per_move;
-        // Auf Ziel-Felder
+        // To target squares
         for (int m : moves)
             board[m].shares[p.index] += share_per_move;
     }
-    // Summen berechnen
+    // Calculate sums
     for (int f = 0; f < NUM_FIELDS; ++f) {
         double sum_white = 0.0, sum_black = 0.0, sum_total = 0.0;
         for (int i = 0; i < MAX_FIGURES; ++i) {
@@ -117,9 +117,9 @@ void distributeShares(const std::vector<Piece>& pieces, std::array<FieldShares, 
     }
 }
 
-// Ausgabe als Heatmap (nur Summen weiß/schwarz)
+// Output as heatmap (only sums white/black)
 void printHeatmap(const std::array<FieldShares, NUM_FIELDS>& board) {
-    std::cout << "\nHeatmap Weiß (Summe Figurenanteile je Feld):\n";
+    std::cout << "\nHeatmap White (sum of piece shares per square):\n";
     for (int r = 0; r < BOARD_SIZE; ++r) {
         for (int c = 0; c < BOARD_SIZE; ++c) {
             std::cout << std::setw(6) << std::fixed << std::setprecision(1)
@@ -127,7 +127,7 @@ void printHeatmap(const std::array<FieldShares, NUM_FIELDS>& board) {
         }
         std::cout << '\n';
     }
-    std::cout << "\nHeatmap Schwarz (Summe Figurenanteile je Feld):\n";
+    std::cout << "\nHeatmap Black (sum of piece shares per square):\n";
     for (int r = 0; r < BOARD_SIZE; ++r) {
         for (int c = 0; c < BOARD_SIZE; ++c) {
             std::cout << std::setw(6) << std::fixed << std::setprecision(1)
@@ -138,13 +138,12 @@ void printHeatmap(const std::array<FieldShares, NUM_FIELDS>& board) {
 }
 
 int main() {
-    // Initialisierung
+    // Initialization
     auto pieces = initPieces();
     std::array<FieldShares, NUM_FIELDS> board;
     distributeShares(pieces, board);
     printHeatmap(board);
-    // Für weitere Iterationen: Anteile aus board in pieces zurückschreiben und erneut verteilen
-    // (Hier nur eine Iteration als Demo)
+    // For further iterations: write shares from board back into pieces and distribute again
+    // (Here only one iteration as demo)
     return 0;
 }
-

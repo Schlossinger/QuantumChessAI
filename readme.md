@@ -1,110 +1,109 @@
-# Der Parallelzug-Algorithmus (Muster-Methode)
+# The Parallel Move Algorithm (Pattern Method)
 
-**Eine neue Dimension für Schach-KI und Analyse**  
-*Von Dominik Schloss (Schlossinger)*
-
----
-
-## 🚀 Einleitung
-
-Stell dir vor, Schachzüge würden nicht mehr einzeln, sondern als **fließende Muster** betrachtet, die sich gleichzeitig über das ganze Brett verteilen.  
-Genau das ermöglicht der **Parallelzug-Algorithmus**, auch „Muster-Methode“ genannt: Eine innovative Methode, die klassische Zugbaum-Logik durch verteilte **Figurenanteile** ersetzt – und so ganz neue Analysen, KIs und Visualisierungen ermöglicht.
+**A New Dimension for Chess AI and Analysis**  
+*By Dominik Schloss (Schlossinger)*
 
 ---
 
-## 🔬 Grundprinzip: Figurenanteile statt einzelner Züge
+## 🚀 Introduction
 
-- **Alle Figuren starten mit 100% Aufenthaltsanteil auf ihrem Feld.**
-- Bei jedem Halbzug wird der Anteil entsprechend der Zugmöglichkeiten über das Brett **verteilt** – wie eine Welle, die sich ausbreitet.
-- **Mehrere Figuren** (auch unterschiedlicher Parteien) können Anteile auf demselben Feld halten.
-- Für jedes der 64 Felder werden **bis zu 32 Figurenanteile** geführt (alle Figuren beider Seiten).
-- Zusätzlich werden für jedes Feld Summen gebildet:
-  1. **Summe der weißen Figurenanteile**
-  2. **Summe der schwarzen Figurenanteile**
-  3. **Gesamtsumme aller Figurenanteile**
-  4. **Anteil „leeres Feld“** (100% minus Gesamtsumme der Figurenanteile)
-
-**Die Summe aller Figurenanteile + Anteil „leeres Feld“ ergibt für jedes Feld stets 100%.**
+Imagine if chess moves were no longer considered individually, but as **flowing patterns** that spread simultaneously across the entire board.  
+That's exactly what the **Parallel Move Algorithm**, also known as the "Pattern Method," enables: An innovative approach that replaces classic move-tree logic with distributed **piece shares**—and thus opens up completely new possibilities for analysis and AI.
 
 ---
 
-## 🧩 Schrittweise Vorgehensweise
+## 🔬 Basic Principle: Piece Shares Instead of Individual Moves
 
-1. **Alle legalen Züge berechnen** (wie bei Minimax)
-2. **Figurenanteile anteilig auf Ziel-Felder verteilen**  
-   - z. B. bei 4 möglichen Zügen: je 25% auf jedes Zielfeld
-3. **Iteration über Halbzüge:**  
-   - Mit jedem Halbzug verteilen sich die Anteile weiter über das Brett
-   - Felder können Anteile von mehreren Figuren und Seiten zugleich halten
-   - Die Muster der Figurenanteile beeinflussen sich gegenseitig (Verstärkung, Abschwächung, „Interferenzen“)
-4. **Musteranalyse:**  
-   - Die Endverteilung der Figurenanteile dient als Basis für die Bewertung von Zügen
-   - Ziel: Denjenigen Ausgangszug finden, der im Verlauf die günstigsten Muster erzeugt
+- **All pieces start with a 100% occupancy share on their field.**
+- At each half-move, the share is **distributed** over the board according to the move possibilities—like a wave spreading out.
+- **Multiple pieces** (even from different sides) can hold shares on the same square.
+- For each of the 64 squares, **up to 32 piece shares** are tracked (all pieces from both sides).
+- Additionally, for each square, sums are calculated:
+    1. **Sum of white piece shares**
+    2. **Sum of black piece shares**
+    3. **Total sum of all piece shares**
+    4. **"Empty field" share** (100% minus the total sum of all piece shares)
 
----
-
-## 🧮 Praxisbeispiel: Eröffnung durch Weiß
-
-Schauen wir uns eine typische Schach-Eröffnung durch Weiß an:
-
-Zu Beginn der Partie können sich alle 8 weißen Bauern und die 2 Springer bewegen. Jeder Bauer hat genau zwei Zugmöglichkeiten (von Reihe 2 auf Reihe 3 oder 4), und jeder Springer ebenfalls zwei mögliche Felder.
-
-**Berechnung der Zugmöglichkeiten:**  
-- 8 Bauern × 2 Züge = **16 Züge**  
-- 2 Springer × 2 Züge = **4 Züge**  
-- Gesamt: **20 mögliche Züge**
-
-**Verteilung der Figurenanteile:**  
-- Jede Figur startet mit 100 % auf ihrem Feld.  
-- Diese 100 % verteilen sich gleichmäßig auf alle möglichen Zielfelder:
-  - **Pro möglichem Zug:** 100 % ÷ 20 Züge = **5 % pro Zug**
-- **Für jede einzelne Figur** gilt bei zwei Zugmöglichkeiten:  
-  - **2 Züge × 5 % = 10 %** verteilen sich auf die beiden Zielfelder.  
-  - Der **Restanteil (90 %) bleibt auf dem Ursprungsfeld** stehen.
-
-**Ergebnis:**  
-- Jedes Zielfeld bekommt jeweils 5 % Figurenanteil hinzu.  
-- Die Ausgangsfelder behalten zunächst 90 % des ursprünglichen Anteils.  
-- Dies erzeugt dynamische Muster, welche die Grundlage weiterer Iterationen und Analysen bilden.
-
-**Mathematische Kurzformel:**  
-Für eine Figur mit \( n \) Zugmöglichkeiten und Aufenthaltsanteil \( A \):
-
-- Anteil pro Zielfeld: \( \frac{A}{n} \)  
-- Verbleibender Anteil auf dem Ursprungsfeld: \( A - n \times \frac{A}{n} \)
+**The sum of all piece shares + the "empty field" share always equals 100% for each square.**
 
 ---
 
-## 🎯 Vorteile & Potenziale
+## 🧩 Step-by-Step Procedure
 
-- **Weniger redundante Berechnungen** als klassische Zugbäume
-- **Dynamische Bewertung:** Züge werden als Muster-Verläufe analysiert, nicht nur als Einzelpositionen
-- **Ideal kombinierbar mit KI & Machine Learning** (z. B. neuronale Netze, stochastische Verfahren)
-- **Neue Visualisierungen:** Heatmaps, Anteilskarten & dynamische Musteranalysen
-
----
-
-## ⚙️ Mathematische Grundstruktur
-
-- **64 Felder × max. 32 Figurenanteile** = 2048 Variablen pro Iterationsschritt
-- **Jeder Anteil ist eine Zahl von 0%–100%**, Summe aller Anteile je Feld ≤ 100%
-- **Vier Summen pro Feld:** weiß, schwarz, gesamt, leer
-- **Iterative Verteilung**: Die Verteilungsmatrix wird bei jedem Halbzug aktualisiert
+1. **Calculate all legal moves** (as in Minimax)
+2. **Distribute piece shares proportionally to target squares**
+    - e.g., with 4 possible moves: 25% to each target square
+3. **Iteration over half-moves:**
+    - With each half-move, the shares continue to spread across the board
+    - Squares can simultaneously hold shares from multiple pieces and sides
+    - The patterns of piece shares influence each other (reinforcement, weakening, "interferences")
+4. **Pattern Analysis:**
+    - The final distribution of piece shares serves as the basis for evaluating moves
+    - Goal: Find the initial move that generates the most favorable patterns over time
 
 ---
 
-## 📊 Visualisierungen
+## 🧮 Practical Example: Opening by White
 
-*Hier könnten Beispiel-Heatmaps oder Diagramme folgen!*  
-*(Bitte ein PNG, SVG oder animiertes GIF als `/img/heatmap1.png` einfügen)*
+Let's look at a typical chess opening by White:
+
+At the beginning of the game, all 8 white pawns and the 2 knights can move. Each pawn has exactly two possible moves (from rank 2 to rank 3 or 4), and each knight also has two options.
+
+**Calculation of move possibilities:**
+- 8 pawns × 2 moves = **16 moves**
+- 2 knights × 2 moves = **4 moves**
+- Total: **20 possible moves**
+
+**Distribution of piece shares:**
+- Each piece starts with 100% on its square.
+- This 100% is evenly distributed across all possible target squares:
+    - **Per possible move:** 100% ÷ 20 moves = **5% per move**
+- **For each individual piece** with two possible moves:
+    - **2 moves × 5% = 10%** are distributed to the two target squares.
+    - The **remaining share (90%) stays on the originating square**.
+
+**Result:**
+- Each target square receives 5% additional piece share.
+- The starting squares initially retain 90% of their original share.
+- This creates dynamic patterns that form the basis for further iterations and analysis.
+
+**Mathematical Short Formula:**  
+For a piece with \( n \) possible moves and occupancy share \( A \):
+
+- Share per target square: \( \frac{A}{n} \)
+- Remaining share on the origin square: \( A - n \times \frac{A}{n} \)
+
+---
+
+## 🎯 Advantages & Potential
+
+- **Fewer redundant calculations** than classic move trees
+- **Dynamic evaluation:** Moves are analyzed as pattern developments, not just as single positions
+- **Ideally combinable with AI & Machine Learning** (e.g., neural networks, stochastic methods)
+- **New visualizations:** Heatmaps, share maps & dynamic pattern analysis
+
+---
+
+## ⚙️ Mathematical Structure
+
+- **64 squares × max. 32 piece shares** = 2048 variables per iteration step
+- **Each share is a number from 0%–100%**, sum of all shares per square ≤ 100%
+- **Four sums per square:** white, black, total, empty
+- **Iterative distribution:** The distribution matrix is updated with each half-move
+
+---
+
+## 📊 Visualizations
+
+*Here you could insert sample heatmaps or diagrams!*  
+*(Please add a PNG, SVG, or animated GIF as `/img/heatmap1.png`)*
 
 ---
 
 ## 🗣️ Call to Action
 
-**Lust auf Diskussion, Kritik, Verbesserung oder Kooperation?**  
-**Kommentiere, teile, forke oder schreib mir –**  
-**Gemeinsam heben wir das Schachbrett auf ein neues Level!**
+**Interested in discussion, feedback, improvement, or cooperation?**  
+**Comment, share, fork, or write to me—**  
+**Together, let's take the chessboard to a new level!**
 
 ---
-

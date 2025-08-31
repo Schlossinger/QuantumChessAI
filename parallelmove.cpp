@@ -7,7 +7,7 @@
 // Constants for the chessboard
 constexpr int BOARD_SIZE = 8;
 constexpr int NUM_FIELDS = BOARD_SIZE * BOARD_SIZE;
-constexpr int MAX_FIGURES = 32; // 16 per side
+constexpr int MAX_PIECES = 32; // 16 per side
 
 // Piece types
 enum PieceType { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONE };
@@ -17,16 +17,16 @@ enum Color { WHITE, BLACK, NO_COLOR };
 
 // Structure for a piece
 struct Piece {
-    PieceType type;
-    Color color;
-    int index; // unique index (0..31)
-    int pos;   // field index 0..63
-    double share; // occupancy share in %
+    PieceType type = NONE;
+    Color color = NO_COLOR;
+    int index = -1; // unique index (0..31)
+    int pos = -1;   // field index 0..63
+    double share = 0.0; // share in %
 };
 
-// For each field: up to 32 piece shares
+// For each field: up to 32 pieces
 struct FieldShares {
-    std::array<double, MAX_FIGURES> shares{}; // share per piece
+    std::array<Piece, MAX_PIECES> shares{}; // pieces per field
     double sum_white = 0.0;
     double sum_black = 0.0;
     double sum_total = 0.0;
@@ -37,7 +37,7 @@ struct FieldShares {
 int toIndex(int row, int col) { return row * BOARD_SIZE + col; }
 std::pair<int, int> toCoord(int idx) { return {idx / BOARD_SIZE, idx % BOARD_SIZE}; }
 
-// Initialize pieces (only pawns and knights for demo)
+// Initialization of pieces (only pawns and knights as demo)
 std::vector<Piece> initPieces() {
     std::vector<Piece> pieces;
     int idx = 0;
@@ -56,7 +56,7 @@ std::vector<Piece> initPieces() {
     return pieces;
 }
 
-// Calculate legal moves for pawns and knights (simplified demo)
+// Calculation of legal moves for pawns and knights (simplified demo)
 std::vector<int> getMoves(const Piece& p) {
     std::vector<int> moves;
     auto [row, col] = toCoord(p.pos);
@@ -83,32 +83,35 @@ std::vector<int> getMoves(const Piece& p) {
     return moves;
 }
 
-// Distribute piece shares to target squares
+// Distribution of pieces to target fields
 void distributeShares(const std::vector<Piece>& pieces, std::array<FieldShares, NUM_FIELDS>& board) {
-    // Empty fields
+    // Clear fields
     for (auto& f : board) {
-        f.shares.fill(0.0);
+        for (auto& p : f.shares) p = Piece{};
         f.sum_white = f.sum_black = f.sum_total = 0.0;
         f.empty_share = 100.0;
     }
-    // Distribute shares
+    // Distribution
     for (const auto& p : pieces) {
         auto moves = getMoves(p);
-        double share_per_move = moves.empty() ? 0.0 : p.share / (moves.size() + 1); // +1 for origin square
-        // Share on origin square
-        board[p.pos].shares[p.index] += share_per_move;
-        // To target squares
-        for (int m : moves)
-            board[m].shares[p.index] += share_per_move;
+        double share_per_move = moves.empty() ? 0.0 : p.share / (moves.size() + 1); // +1 for origin field
+        // Origin field
+        board[p.pos].shares[p.index] = p;
+        board[p.pos].shares[p.index].share = share_per_move;
+        // Target fields
+        for (int m : moves) {
+            board[m].shares[p.index] = p;
+            board[m].shares[p.index].share = share_per_move;
+        }
     }
     // Calculate sums
     for (int f = 0; f < NUM_FIELDS; ++f) {
         double sum_white = 0.0, sum_black = 0.0, sum_total = 0.0;
-        for (int i = 0; i < MAX_FIGURES; ++i) {
-            double s = board[f].shares[i];
+        for (int i = 0; i < MAX_PIECES; ++i) {
+            double s = board[f].shares[i].share;
             sum_total += s;
-            if (i < 16) sum_white += s;
-            else sum_black += s;
+            if (board[f].shares[i].color == WHITE) sum_white += s;
+            else if (board[f].shares[i].color == BLACK) sum_black += s;
         }
         board[f].sum_white = sum_white;
         board[f].sum_black = sum_black;
@@ -119,7 +122,7 @@ void distributeShares(const std::vector<Piece>& pieces, std::array<FieldShares, 
 
 // Output as heatmap (only sums white/black)
 void printHeatmap(const std::array<FieldShares, NUM_FIELDS>& board) {
-    std::cout << "\nHeatmap White (sum of piece shares per square):\n";
+    std::cout << "\nHeatmap White (Sum of piece shares per field):\n";
     for (int r = 0; r < BOARD_SIZE; ++r) {
         for (int c = 0; c < BOARD_SIZE; ++c) {
             std::cout << std::setw(6) << std::fixed << std::setprecision(1)
@@ -127,7 +130,7 @@ void printHeatmap(const std::array<FieldShares, NUM_FIELDS>& board) {
         }
         std::cout << '\n';
     }
-    std::cout << "\nHeatmap Black (sum of piece shares per square):\n";
+    std::cout << "\nHeatmap Black (Sum of piece shares per field):\n";
     for (int r = 0; r < BOARD_SIZE; ++r) {
         for (int c = 0; c < BOARD_SIZE; ++c) {
             std::cout << std::setw(6) << std::fixed << std::setprecision(1)
@@ -143,7 +146,7 @@ int main() {
     std::array<FieldShares, NUM_FIELDS> board;
     distributeShares(pieces, board);
     printHeatmap(board);
-    // For further iterations: write shares from board back into pieces and distribute again
+    // For further iterations: write shares from board back to pieces and redistribute
     // (Here only one iteration as demo)
     return 0;
 }
